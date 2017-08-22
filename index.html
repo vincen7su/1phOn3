@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>iPhone</title>
+    <link rel="icon" href="img/favicon.ico">
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <div id="iphone" class="screen">
+      <status-bar></status-bar>
+
+      <desktop
+        :desktop="desktop"
+        :apps="apps"
+        :is-delete-mode="isDeleteMode"></desktop>
+
+      <div class="dock">
+        <app
+          v-for="(appName, index) in dock"
+          :key="index"
+          :app-name="appName"
+          :app-data="apps[appName]"
+          :is-delete-mode="isDeleteMode"></app>
+      </div>
+
+      <div class="desktop-navigation">
+        <div class="navigation-dot"
+          v-for="index in desktopNavigationDots"
+          :class="{ active: index === navigationIndex }"></div>
+      </div>
+
+      <transition name="modal-fade">
+        <modal
+          v-show="modalData.show"
+          :title="modalData.title"
+          :content="modalData.content"
+          :button-setting="modalData.buttonSetting"></modal>
+      </transition>
+
+      <assistive-touch></assistive-touch>
+    </div>
+    <script src="dist/vue.min.js"></script>
+    <script src="dist/vuex.min.js"></script>
+    <script src="dist/core.js"></script>
+  </body>
+</html>
