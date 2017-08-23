@@ -7,7 +7,7 @@ export const appComponent = {
         @touchend.stop="touchEnd"
         @mousedown.stop="touchStart"
         @mouseup.stop="touchEnd"
-        @mouseleave.stop="mouseLeave">
+        @mouseleave.stop="touchEnd">
         <div class="app-icon"
           v-if="iconHasTemplate"
           v-html="appData.template()"
@@ -66,7 +66,9 @@ export const appComponent = {
     },
     touchStart() {
       this._togglePressTarget();
-      this.largeIcon = this.isDeleteMode;
+      setTimeout(() => {  // delay for animation reset
+        this.largeIcon = this.isDeleteMode;
+      }, 100);
       this.toggleDeleteModeTimer = setTimeout(() => {
         this._commit('deleteModeOn');
         this.largeIcon = true;
@@ -74,16 +76,12 @@ export const appComponent = {
     },
     touchEnd() {
       if (this.appData.isPressTartget) {
-        this._togglePressTarget();
         this.largeIcon = false;
+        setTimeout(() => {  // delay for animation reset
+          this._togglePressTarget();
+        }, 100);
       }
       clearTimeout(this.toggleDeleteModeTimer);
-    },
-    mouseLeave() {
-      if (this.appData.isPressTartget) {
-        this._togglePressTarget();
-        this.largeIcon = false;
-      }
     },
     deleteApp() {
       this.$root.$emit('deleteApp', this.appName);

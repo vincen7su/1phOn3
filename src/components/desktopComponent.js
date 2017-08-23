@@ -10,6 +10,8 @@ const POSITION_SHIFT_WIDTH_MAX = WINDOW_WIDTH - POSITION_SHIFT;
 export const desktopComponent = {
   template: `
     <div class="desktop"
+      @touchstart="touchStart"
+      @touchmove="move"
       @mousedown="touchStart"
       @mousemove="move">
       <div class="app-container"
@@ -40,47 +42,56 @@ export const desktopComponent = {
   },
   mounted() {
     document.addEventListener('mouseup', this.touchEnd);
+    this.$el.addEventListener('touchend', this.touchEnd);
   },
   computed: {
     maxDesktopIndex() {
       return this.desktop.length - 1;
+    },
+    maxLeftBoundary() {
+      return 0;
+    },
+    maxRightBoundary() {
+      return -this.maxDesktopIndex * WINDOW_WIDTH;
     }
   },
   methods: {
-    _getMousePosition(e) {
+    _getMousePosition(event) {
       let rect = this.$root.$el.getBoundingClientRect();
-      return (e.pageX !== undefined) ? e.pageX - rect.left : event.touches[0].pageX;
+      return (event.pageX !== undefined) ? event.pageX - rect.left : event.touches[0].pageX;
     },
-    touchStart(e) {
-      if (e.target.classList.contains('app-container')) {
+    touchStart(event) {
+      if (event.target.classList.contains('app-container')) {
         this.isTouchStart = true;
-        this.mouseMovePosition = this._getMousePosition(e);
-        this.mouseUpPosition = this._getMousePosition(e);
+        this.mouseMovePosition = this._getMousePosition(event);
+        this.mouseUpPosition = this._getMousePosition(event);
         this.isFastSwipe = true;
         this.fastSwipeTimer = setTimeout(() => { this.isFastSwipe = false; }, 300);
       }
     },
-    move(e) {
-      if (this.isTouchStart && e.target.classList.contains('app-container')) {
-        let isMouseEvent = e.pageX !== undefined;
-        let position = isMouseEvent ? e.layerX : e.touches[0].pageX;
+    move(event) {
+      if (this.isTouchStart && event.target.classList.contains('app-container')) {
+        let isMouseEvent = event.pageX !== undefined;
+        let position = isMouseEvent ? event.layerX : event.touches[0].pageX;
         let positionShift = isMouseEvent ? 0 : POSITION_SHIFT;
         let widthMax = isMouseEvent ? POSITION_SHIFT_WIDTH_MAX : POSITION_SHIFT_WIDTH_MAX;
         let currentMousePosition = position > positionShift ? ((position < widthMax) ? position : widthMax) : positionShift;
         let mouseMove = currentMousePosition - this.mouseMovePosition;
+        if (this.position > this.maxLeftBoundary || this.position < this.maxRightBoundary) {  // Boundary resistance
+          mouseMove = mouseMove / 2.5;
+        }
         this.position += mouseMove;
         this.mouseMovePosition = currentMousePosition;
         this.$el.style.transform = 'translate3d(' + this.position + 'px, 0, 0)';
       }
     },
-    touchEnd(e) {
-      let currentMousePosition = this._getMousePosition(e);
-      if (this.isTouchStart && currentMousePosition !== this.mouseUpPosition) {
+    touchEnd() {
+      if (this.isTouchStart && this.mouseMovePosition !== this.mouseUpPosition) {
         let desktopIndexBackup = this.desktopIndex;
         if (this.isFastSwipe) {
           clearTimeout(this.fastSwipeTimer);
           this.isFastSwipe = false;
-          this.desktopIndex = (this.mouseUpPosition > currentMousePosition) ? this.desktopIndex - 1 : this.desktopIndex + 1;
+          this.desktopIndex = (this.mouseUpPosition > this.mouseMovePosition) ? this.desktopIndex - 1 : this.desktopIndex + 1;
         } else {
           this.desktopIndex = Math.round(this.position / WINDOW_WIDTH);
         }

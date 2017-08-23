@@ -7,10 +7,10 @@ export const modalComponent = {
           <div class="content">{{ content }}</div>
         </div>
         <div class="button-wrap">
-          <button class="button"
+          <div class="button"
             v-for="buttonData in buttonSetting"
             :class="buttonData.class"
-            @click="buttonClick(buttonData.value)">{{ buttonData.text }}</button>
+            @click="buttonClick(buttonData.value)">{{ buttonData.text }}</div>
         </div>
       </div>
     </div>

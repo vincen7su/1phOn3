@@ -18,7 +18,6 @@ export const assistiveTouchComponent = {
   `,
   data() {
     return {
-      isTap: false,
       isNowPressing: false,
       isActive: false,
       isOpen: false,
@@ -28,6 +27,9 @@ export const assistiveTouchComponent = {
       },
       mousePosition: {
         x: 0, y: 0
+      },
+      touchStartPosition: {
+        x: 0, y: 0
       }
     };
   },
@@ -36,15 +38,19 @@ export const assistiveTouchComponent = {
     document.addEventListener('mousemove', this.move);
     document.addEventListener('mouseup', this.touchEnd);
   },
+  computed: {
+    isTap() {
+      return this.isNowPressing && this.touchStartPosition.x === this.mousePosition.x && this.touchStartPosition.y === this.mousePosition.y;
+    }
+  },
   methods: {
     move(e) {
       if (this.isNowPressing) {
-        this.isTap = false;
         let rect = this.$root.$el.getBoundingClientRect();
         let isMouseEvent = e.pageX !== undefined;
         let position = {
-          x: isMouseEvent ? e.pageX - rect.left : event.touches[0].pageX,
-          y: isMouseEvent ? e.pageY - rect.top : event.touches[0].pageY
+          x: isMouseEvent ? e.pageX - rect.left : e.touches[0].pageX,
+          y: isMouseEvent ? e.pageY - rect.top : e.touches[0].pageY
         };
         let positionShift = isMouseEvent ? 0 : POSITION_SHIFT;
         let widthMax = isMouseEvent ? POSITION_SHIFT_WIDTH_MAX : POSITION_SHIFT_WIDTH_MAX;
@@ -68,16 +74,18 @@ export const assistiveTouchComponent = {
       clearTimeout(this.deActiveTimer);
       this.isActive = true;
       this.isNowPressing = true;
-      this.isTap = true;
-      this.mousePosition.x = event.layerX || event.touches[0].pageX;
-      this.mousePosition.y = event.layerY || event.touches[0].pageY;
+      let rect = this.$root.$el.getBoundingClientRect();
+      let isMouseEvent = event.pageX !== undefined;
+      this.mousePosition.x = event.pageX - rect.left || event.touches[0].pageX;
+      this.mousePosition.y = event.pageY - rect.top || event.touches[0].pageY;
+      this.touchStartPosition.x = this.mousePosition.x;
+      this.touchStartPosition.y = this.mousePosition.y;
     },
     touchEnd() {
-      this.isNowPressing = false;
       if (this.isTap) {
-        this.isTap = false;
         this.$root.$emit('homeScreen');
       }
+      this.isNowPressing = false;
       let newPosition = { x: this.position.x, y: this.position.y };
       let distance = {
         x: (newPosition.x - 0 < WINDOW_WIDTH - newPosition.x - ICON_SIZE) ? newPosition.x - 0 : WINDOW_WIDTH - newPosition.x - ICON_SIZE,
